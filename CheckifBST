@@ -1,0 +1,47 @@
+vector<int> inorder(Node* root)
+{
+static vector<int> p;
+if(root==NULL)
+{
+return {0};
+
+}
+
+inorder(root->left);
+p.push_back(root->data);
+inorder(root->right);
+
+return p;
+
+}
+bool sorted(vector<int> p)
+{
+    int n=p.size();
+    for(int i=0;i<n-1;i++)
+    {
+if(p[i]>p[i+1])
+{
+    return false;
+}
+    }
+
+
+return true;
+}
+
+int main(){
+
+ Node* root= new Node(6);
+   root->left= new Node(3);
+   root->right= new Node(8);
+   //checkif BST
+   root->left->left=new Node(2);
+   root->left->right=new Node(4);
+   root->right->left=new Node(7);
+   root->right->right=new Node(9);
+cout<<sorted(inorder(root));
+
+
+
+    return 0;
+}
