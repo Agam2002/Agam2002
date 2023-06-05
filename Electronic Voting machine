@@ -1,0 +1,177 @@
+// EVM using verilog and Xilinx
+
+//`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date:    21:05:58 04/09/2022 
+// Design Name: 
+// Module Name:    EVM 
+// Project Name: 
+// Target Devices: 
+// Tool versions: 
+// Description: 
+//
+// Dependencies: 
+//
+// Revision: 
+// Revision 0.01 - File Created
+// Additional Comments: 
+//
+//////////////////////////////////////////////////////////////////////////////////
+module EVM(clk,button_control,tally,reset,part_y,vote_s0,vote_s1,vote_s2,vote_s3,vote_s4,vote_s5,vote_s6,vote_s7,vote_s8,vote_s9);
+input clk,button_control,reset,tally;
+input [9:0] part_y;
+output [3:0] vote_s0,vote_s1,vote_s2,vote_s3,vote_s4,vote_s5,vote_s6,vote_s7,vote_s8,vote_s9;
+reg vote_s0,vote_s1,vote_s2,vote_s3,vote_s4,vote_s5,vote_s6,vote_s7,vote_s8,vote_s9; // make them of 4 bits
+
+
+reg flag;
+
+always @(posedge part_y or button_control)
+begin
+case(part_y)
+10'b0000000001:flag=1;
+10'b0000000010:flag=1;
+10'b0000000100:flag=1;
+10'b0000001000:flag=1;
+10'b0000010000:flag=1;
+10'b0000100000:flag=1;
+10'b0001000000:flag=1;
+10'b0010000000:flag=1;
+10'b0100000000:flag=1;
+10'b1000000000:flag=1;
+default:flag=0;
+endcase
+end
+
+
+
+
+
+
+reg [3:0] vote_counter0;
+reg [3:0] vote_counter1; 
+reg [3:0] vote_counter2; 
+reg [3:0] vote_counter3;
+reg [3:0] vote_counter4; 
+reg [3:0] vote_counter5; 
+reg [3:0] vote_counter6; 
+reg [3:0] vote_counter7; 
+reg [3:0] vote_counter8; 
+reg [3:0] vote_counter9;   // maximum 100 voters are available
+
+always @(posedge clk)
+begin
+ if(reset)
+	 begin
+	 vote_counter0 =4'b000;
+	  vote_counter1 =4'b000;
+	   vote_counter2 =4'b000;
+		 vote_counter3 =4'b000;
+		  vote_counter4 =4'b000;
+		   vote_counter5 =4'b000;
+			 vote_counter6 =4'b000;
+			  vote_counter7 =4'b000;
+			   vote_counter8 =4'b000;
+				 vote_counter9 =4'b000;
+	 end
+end
+
+always @(button_control)
+begin
+	if(button_control && flag)
+	begin
+	
+	if(part_y[0]==1 && vote_counter0<100)
+	begin
+	vote_counter0=vote_counter0 + 1;
+	$display("A");
+	end
+	
+	else if(part_y[1]==1 && vote_counter1<100)
+	begin
+	vote_counter1=vote_counter1 + 1;
+	$display("B");
+	end
+	
+	else if(part_y[2]==1 && vote_counter2<100)
+	begin
+	vote_counter2=vote_counter2 + 1;
+	$display("C");
+	end
+	
+	else if(part_y[3]==1 && vote_counter3<100)
+	begin
+	vote_counter3=vote_counter3 + 1;
+	$display("D");
+	end
+	
+	else if(part_y[4]==1 && vote_counter4<100)
+	begin
+	vote_counter4=vote_counter4 + 1;
+	$display("E");
+	end
+	
+	else if(part_y[5]==1 && vote_counter5<100)
+	begin
+	vote_counter5=vote_counter5 + 1;
+	$display("F");
+	end
+	
+	else if(part_y[6]==1 && vote_counter6<100)
+	begin
+	vote_counter6=vote_counter6 + 1;
+	$display("G");
+	end
+	
+	else if(part_y[7]==1 && vote_counter7<100)
+	begin
+	vote_counter7=vote_counter7 + 1;
+	$display("H");
+	end
+	
+	else if(part_y[8]==1 && vote_counter8<100)
+	begin
+	vote_counter8=vote_counter8 + 1;
+	$display("I");
+	end
+	
+	else if(part_y[9]==1 && vote_counter9<100)
+	begin
+	vote_counter9=vote_counter9 + 1;
+	$display("J");
+	end
+	
+	else
+	begin
+	if(!flag)
+	$display("No two parties can be selected at the same moment!!");
+	end
+	 end
+	     end
+				
+initial	        // vote_s calculation
+begin
+	if(!flag)
+	$display("No two parties can be selected at the same moment!!");
+	end
+				
+always @(posedge tally)
+begin
+vote_s0<=vote_counter0;
+vote_s1<=vote_counter1;
+vote_s2<=vote_counter2;
+vote_s3<=vote_counter3;
+vote_s4<=vote_counter4;
+vote_s5<=vote_counter5;
+vote_s6<=vote_counter6;
+vote_s7<=vote_counter7;
+vote_s8<=vote_counter8;
+vote_s9<=vote_counter9;
+
+end
+				
+endmodule
+//done!!
