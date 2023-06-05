@@ -1,0 +1,78 @@
+//Verilog code being run in vscode with gtkwave
+
+module booth_algo(M,Q,U,clk);
+
+input [3:0] M,Q;
+input clk;
+output reg [7:0] U;
+integer n;
+reg [3:0] AC;
+reg Qu;
+reg [3:0] Mi;
+reg [3:0] Qi;
+
+initial
+begin
+AC=0;
+Qu=0;
+n=4;
+#1 Mi<=M;
+#1 Qi<=Q;
+end
+
+
+always @(posedge clk) 
+if(n!=0)
+begin
+
+if({Qi[0],Qu}==2'b01)
+AC=AC+M;
+
+else if({Qi[0],Qu}==2'b10)
+AC=AC-M;
+
+{AC,Qi,Qu}={AC,Qi,Qu}>>>1;
+
+n=n-1;
+
+end
+
+else
+begin
+  U={AC,Qi};
+  //$finish;
+end
+
+endmodule
+
+  
+//Testbench generation
+module booth_tb;
+
+reg [3:0] M,Q;
+reg clk; 
+wire [7:0] U;
+
+booth_algo uut(M,Q,U,clk);
+
+initial
+begin
+  
+clk=0;
+M=1001;  // M=9
+Q=1001;  // Q=9
+
+
+$dumpfile("booth_tb.vcd");
+$dumpvars(0,booth_tb);
+
+
+end
+
+
+always #10 clk=~clk;
+initial #200 $finish;
+
+
+
+endmodule
