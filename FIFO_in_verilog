@@ -1,5 +1,8 @@
-module sync_fifo (full,data,wr_en,rst_n,clk,rd_en,data_o, empty_o);
-output full;
+// Synchronous FIFO is called synchronous because it uses same clk for read and write operation.
+// Why do we need Sync.. FIFO if clock domains are same, well because of difference in data rates, or clock timings and phase. 
+
+module sync_fifo (full,data,wr_en,rst_n,clk,rd_en,data_o, empty_o);  // Ports and signals
+output full;  
 input [7:0] data;
 input wr_en;
 input rst_n;
@@ -8,16 +11,16 @@ input rd_en;
 output reg [7:0] data_o;
 output empty_o;
 
-parameter depth = 16;
+parameter depth = 16; // Depth of FIFO
 
 reg [7:0] mem [0:depth-1];
 reg [3:0] wr_ptr;
 reg [3:0] rd_ptr;
 reg [4:0] count; // Should be able to count from 0 to depth
 
-assign full = (count == depth);
-assign empty_o = (count == 0);
-
+assign full = (count == depth);  // Assign full
+assign empty_o = (count == 0);   // Assign empty
+// for writing
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         wr_ptr <= 0;
@@ -26,7 +29,7 @@ always @(posedge clk or negedge rst_n) begin
         wr_ptr <= wr_ptr + 1;
     end
 end
-
+// for reading
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         rd_ptr <= 0;
