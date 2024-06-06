@@ -1,84 +1,120 @@
-module sync_fifo(full,data,wr_en,rst_n,clk,rd_en,data_o,empty_o);
-
-
-input clk,rst_n,wr_en,rd_en;
-output full,empty_o;
+module sync_fifo (full,data,wr_en,rst_n,clk,rd_en,data_o, empty_o);
+output full;
 input [7:0] data;
+input wr_en;
+input rst_n;
+input clk;
+input rd_en;
 output reg [7:0] data_o;
+output empty_o;
 
-parameter  depth = 8;
+parameter depth = 16;
 
 reg [7:0] mem [0:depth-1];
+reg [3:0] wr_ptr;
+reg [3:0] rd_ptr;
+reg [4:0] count; // Should be able to count from 0 to depth
 
-reg [2:0] wr_ptr;
-reg [2:0] rd_ptr;
-reg [3:0] count;
+assign full = (count == depth);
+assign empty_o = (count == 0);
 
-
-assign full=(count==depth);
-assign empty_o=(count==0);
-
-always @(posedge clk or negedge rst_n)
-begin
-if (!rst_n) begin
-    wr_ptr<=0;
-end    
-
-else begin
- if(wr_en==1)
-begin
-  mem[wr_ptr]<=data;
-  wr_ptr<=wr_ptr+1;
-
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        wr_ptr <= 0;
+    end else if (wr_en && !full) begin
+        mem[wr_ptr] <= data;
+        wr_ptr <= wr_ptr + 1;
+    end
 end
 
-
-end
-end
-
-
-
-
-always @(posedge clk or negedge rst_n)
-begin
-if (!rst_n) begin
-    rd_ptr<=0;
-end    
-
-else begin
- if(rd_en==1)
-begin
-data_o=mem[rd_ptr];
-  rd_ptr<=rd_ptr+1;
-
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        rd_ptr <= 0;
+    end else if (rd_en && !empty_o) begin
+        data_o <= mem[rd_ptr];
+        rd_ptr <= rd_ptr + 1;
+    end
 end
 
-
-end
-end
-
-always @(posedge clk or negedge rst_n) 
-begin
-
-if(!rst_n) begin
-  count<=4'd0;
-end
-
-else
-begin
-  case({wr_en,rd_en})
-  2'b10: count<=count+1;
-  2'b01:count<=count-1;
-
-  default:count<=count;
-
-  endcase
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        count <= 0;
+    end else begin
+        case ({wr_en, rd_en})
+            2'b10: if (!full) count <= count + 1;
+            2'b01: if (!empty_o) count <= count - 1;
+            default: count <= count;
+        endcase
+    end
 end
 
+endmodule
+<-------------------------TESTBENCH---------------------------->
+module test_fifo;
 
+reg clk, rst_n, wr_en, rd_en;
+wire full, empty_o;
+reg [7:0] data;
+wire [7:0] data_o;
 
+sync_fifo uut (
+    .full(full),
+    .data(data),
+    .wr_en(wr_en),
+    .rst_n(rst_n),
+    .clk(clk),
+    .rd_en(rd_en),
+    .data_o(data_o),
+    .empty_o(empty_o)
+);
+
+initial begin
+    clk = 0;
+    rst_n = 0;
+    wr_en = 0;
+    rd_en = 0;
+    data = 8'h1e;
+    #5 rst_n = 1;
+    $dumpfile("test_fifo.vcd");
+    $dumpvars(0, test_fifo);
 end
 
+initial begin
+    #10 data = 8'h12;
+    wr_en = 1;
+    #20 wr_en = 0;
+    rd_en = 1;
+    #20 rd_en = 0;
 
+    #10 data = 8'h23;
+    wr_en = 1;
+    #20 wr_en = 0;
+    rd_en = 1;
+    #20 rd_en = 0;
+    
+    #10 data = 8'h42;
+    wr_en = 1;
+    #20 wr_en = 0;
+    rd_en = 1;
+    #20 rd_en = 0;
+
+    #10 data = 8'h75;
+    wr_en = 1;
+    #20 wr_en = 0;
+    rd_en = 1;
+    #20 rd_en = 0;
+
+    // Additional test data...
+
+    #10 data = 8'h69;
+    wr_en = 1;
+    #20 wr_en = 0;
+    rd_en = 1;
+    #20 rd_en = 0;
+end
+
+always #10 clk = ~clk;
+
+initial #500 $finish;
 
 endmodule
