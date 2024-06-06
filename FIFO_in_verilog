@@ -1,3 +1,101 @@
+// 2K20/EC/016 AGAM SHARMA DELHI TECHNOLOGICAL UNIVERSITY
+/*
+01/07/023 first appearance
+
+FIFO is a data structure and memory architecture used to connect two devices a buffer in between them so as 
+to synchronize and avoid any data loss.
+In this piece of verilog code, I have used one fifo being used as data synchronizer.
+*/
+// Asynchronous FIFO have different frequencies for read and write and here the FIFO comes into Picture
+
+module Fifo_buffer (wr_freq, rd_freq, data_in, data_out, rst, full, empty);
+
+input wr_freq, rd_freq, rst; // write frequency > read frequency
+input [7:0] data_in; // DATA bus=8 bits
+output reg [7:0] data_out;
+output full, empty;
+parameter depth = 8;
+reg [7:0] mem[depth-1:0]; // 8x8 FIFO memory
+reg [2:0] wr_ptr;
+reg [2:0] rd_ptr;
+
+assign full = ((wr_ptr + 1) % depth == rd_ptr);
+assign empty = (wr_ptr == rd_ptr);
+
+always @(posedge wr_freq or posedge rst)
+begin
+    if (rst) begin
+        wr_ptr <= 0;
+    end else if (!full) begin
+        mem[wr_ptr] <= data_in;   
+        wr_ptr <= (wr_ptr + 1) % depth;
+    end    
+end
+
+always @(posedge rd_freq or posedge rst)
+begin
+    if (rst) begin
+        rd_ptr <= 0;
+    end else if (!empty) begin
+        data_out <= mem[rd_ptr];
+        rd_ptr <= (rd_ptr + 1) % depth;
+    end
+end
+
+endmodule
+<----------------------------TESTBENCH--------------------->
+module Fifo_buffer_test;
+
+reg wr_freq, rd_freq, rst;
+reg [7:0] data_in;
+wire [7:0] data_out;
+wire full, empty;
+
+Fifo_buffer uut(wr_freq, rd_freq, data_in, data_out, rst, full, empty);
+
+initial
+begin
+    {wr_freq, rd_freq, rst} = 3'b001;
+    data_in = 0;
+
+    $dumpfile("Fifo_buffer_test.vcd");
+    $dumpvars(0, Fifo_buffer_test);
+end
+
+initial
+begin
+    #4 rst = 0;
+end
+
+initial
+begin
+    #10 data_in = 8'h12;
+    #10 data_in = 8'h23;
+    #10 data_in = 8'h42;
+    #10 data_in = 8'h75;
+    #10 data_in = 8'h1c;
+    #10 data_in = 8'h12;
+    #10 data_in = 8'h45;
+    #10 data_in = 8'h41;
+    #10 data_in = 8'h47;
+    #10 data_in = 8'h23;
+    #10 data_in = 8'ha2;
+    #10 data_in = 8'h78;
+    #10 data_in = 8'h36;
+    #10 data_in = 8'h96;
+    #10 data_in = 8'hff;
+    #10 data_in = 8'h69;
+end
+
+always #5 wr_freq = ~wr_freq;
+always #10 rd_freq = ~rd_freq;
+
+initial #450 $finish;
+
+endmodule
+
+
+
 // Synchronous FIFO is called synchronous because it uses same clk for read and write operation.
 // Why do we need Sync.. FIFO if clock domains are same, well because of difference in data rates, or clock timings and phase. 
 
@@ -11,7 +109,7 @@ input rd_en;
 output reg [7:0] data_o;
 output empty_o;
 
-parameter depth = 16; // Depth of FIFO
+parameter depth = 4; // Depth of FIFO
 
 reg [7:0] mem [0:depth-1];
 reg [3:0] wr_ptr;
@@ -26,7 +124,7 @@ always @(posedge clk or negedge rst_n) begin
         wr_ptr <= 0;
     end else if (wr_en && !full) begin
         mem[wr_ptr] <= data;
-        wr_ptr <= wr_ptr + 1;
+        wr_ptr <= (wr_ptr + 1)%depth;
     end
 end
 // for reading
@@ -35,7 +133,7 @@ always @(posedge clk or negedge rst_n) begin
         rd_ptr <= 0;
     end else if (rd_en && !empty_o) begin
         data_o <= mem[rd_ptr];
-        rd_ptr <= rd_ptr + 1;
+        rd_ptr <= (rd_ptr + 1)%depth;
     end
 end
 
